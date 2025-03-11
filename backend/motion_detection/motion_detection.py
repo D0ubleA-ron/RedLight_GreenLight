@@ -1,48 +1,33 @@
+from imutils.object_detection import non_max_suppression
+from imutils import paths
+import numpy as np
+import imutils
 import cv2
-print(cv2.__version__)
 
+Frame=cv2.VideoCapture(0)
 
-tracker = cv2.legacy.TrackerKCF_create()
-    
-# Initialize the HOG person detector
 hog = cv2.HOGDescriptor()
 hog.setSVMDetector(cv2.HOGDescriptor_getDefaultPeopleDetector())
 
-# Open video capture (0 for default webcam, or replace with video file path)
-cap = cv2.VideoCapture(0)
-
-tracker_initialized = False
-tracker = None
-
 while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+    ret,image=Frame.read()
+    image = imutils.resize(image, width=min(350, image.shape[1]))
+    orig = image.copy()
 
-    if not tracker_initialized:
-        # Detect people in the frame
-        boxes, weights = hog.detectMultiScale(frame, winStride=(8, 8))
-        if len(boxes) > 0:
-            # For simplicity, pick the first detected person
-            bbox = boxes[0]
-            # Initialize the tracker (KCF in this case)
-            tracker = cv2.TrackerKCF_create()
-            tracker.init(frame, tuple(bbox))
-            tracker_initialized = True
-    else:
-        # Update tracker and get updated position
-        success, bbox = tracker.update(frame)
-        if success:
-            x, y, w, h = [int(v) for v in bbox]
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        else:
-            # If tracking fails, reinitialize detection
-            tracker_initialized = False
 
-    # Display the frame with the tracking rectangle
-    cv2.imshow("Person Tracking", frame)
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
+    (rects, weights) = hog.detectMultiScale(image, winStride=(4, 4),padding=(8, 8), scale=1.10)
 
-cap.release()
-cv2.destroyAllWindows()
+    for (x, y, w, h) in rects:
+        cv2.rectangle(orig, (x, y), (x + w, y + h), (0, 0, 255), 2)
+
+
+    rects = np.array([[x, y, x + w, y + h] for (x, y, w, h) in rects])
+    pick = non_max_suppression(rects, probs=None, overlapThresh=0.65)
+
+
+    for (xA, yA, xB, yB) in pick:
+        cv2.rectangle(image, (xA, yA), (xB, yB), (0, 255, 0), 2)
+
+
+    cv2.imshow("Body Detection", image)
+    cv2.waitKey(1)
