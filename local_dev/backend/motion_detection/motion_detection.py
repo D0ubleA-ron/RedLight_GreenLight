@@ -1,107 +1,119 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# Function to get pose estimation from the model
-def get_pose_estimation(frame, model):
-    results = model(frame, verbose=False)
-    return results
+from game import countdown, red_light_green_light_loop, get_player_names
 
-# Function to extract keypoints from the results
-def extract_keypoints(results):
-    if results[0].keypoints is not None:
-        keypoints = results[0].keypoints.data if hasattr(results[0].keypoints, 'data') else results[0].keypoints
-        if hasattr(keypoints, 'cpu'):
-            keypoints = keypoints.cpu().numpy()
-        return keypoints
-    return None
+class MotionDetector:
+    def __init__(self):
+        self.cap = cv2.VideoCapture(0)
+        self.model = YOLO("yolov8n-pose.pt")
+        self.movement_threshold = 30.0
+        self.prev_centers = {}
+        self.red_light = False
+        self.players = {}  # Store player names
+        self.eliminated = set()  # Track eliminated players
 
-# Function to filter valid keypoints
-def filter_valid_keypoints(person, conf_threshold=0.5):
-    return [kp for kp in person if kp[2] > conf_threshold]
+    def get_pose_estimation(self, frame):
+        results = self.model(frame, verbose=False)
+        return results
 
-# Function to compute center of the person
-def compute_center(person, valid_keypoints):
-    if valid_keypoints:
-        valid_keypoints = np.array(valid_keypoints)
-        center = np.mean(valid_keypoints[:, :2], axis=0)
-    else:
-        center = np.mean(person[:, :2], axis=0)
-    return center
+    def extract_keypoints(self, results):
+        if results[0].keypoints is not None:
+            keypoints = results[0].keypoints.data if hasattr(results[0].keypoints, 'data') else results[0].keypoints
+            if hasattr(keypoints, 'cpu'):
+                keypoints = keypoints.cpu().numpy()
+            return keypoints
+        return None
 
-# Function to compare movement of the person
-def compare_movement(i, center, prev_centers, movement_threshold):
-    if i in prev_centers:
-        movement = np.linalg.norm(center - prev_centers[i])
-        if movement > movement_threshold:
-            print(f"Person {i} has moved {movement:.2f} pixels")
+    def filter_valid_keypoints(self, person, conf_threshold=0.5):
+        return [kp for kp in person if kp[2] > conf_threshold]
+
+    def compute_center(self, person, valid_keypoints):
+        if valid_keypoints:
+            valid_keypoints = np.array(valid_keypoints)
+            center = np.mean(valid_keypoints[:, :2], axis=0)
         else:
-            print(f"Person {i} movement insignificant: {movement:.2f} pixels")
-    else:
-        print(f"Person {i} detected for the first time.")
+            center = np.mean(person[:, :2], axis=0)
+        return center
 
-# Function to process keypoints
-def process_keypoints(results, prev_centers, movement_threshold):
-    current_centers = {}
-    keypoints = extract_keypoints(results)
-    if keypoints is None:
-        return current_centers
+    def process_keypoints(self, results, players):
+        keypoints = self.extract_keypoints(results)
+        if keypoints is None:
+            return {}, set()
 
-    for i, person in enumerate(keypoints):
-        valid_keypoints = filter_valid_keypoints(person)
-        center = compute_center(person, valid_keypoints)
-        current_centers[i] = center
-        print(f"Person {i} center at: {center}")
-        compare_movement(i, center, prev_centers, movement_threshold)
-    
-    return current_centers
+        current_centers = {}
+        eliminated_this_round = set()
 
-# Function to process bounding boxes
-def process_boxes(results):
-    if hasattr(results[0], 'boxes') and results[0].boxes is not None:
-        boxes = (results[0].boxes.xyxy.data 
-                 if hasattr(results[0].boxes.xyxy, 'data') 
-                 else results[0].boxes.xyxy)
-        if hasattr(boxes, 'cpu'):
-            boxes = boxes.cpu().numpy()
-        for i, box in enumerate(boxes):
-            print(f"Person {i} bounding box: {box.tolist()}")
-            
-# Function to initialize the tracker        
-def initialize_tracker():
-    cap = cv2.VideoCapture(0)
-    model = YOLO("yolov8n-pose.pt")
-    movement_threshold = 10.0
-    prev_centers = {}
-    return cap, model, movement_threshold, prev_centers
+        for i, person in enumerate(keypoints):
+            if i in self.eliminated:  # Skip eliminated players
+                continue
 
-# Function to end the tracker
-def end_tacker(cap):
-    cap.release()
-    cv2.destroyAllWindows()
+            valid_kp = self.filter_valid_keypoints(person)
+            center = self.compute_center(person, valid_kp)
+            current_centers[i] = center
 
-# Function to draw keypoints
-def draw_keypoints(results):
-    annotated_frame = results[0].plot()
-    cv2.imshow('YOLOv8 Pose Detection', annotated_frame)
+            if self.red_light and i in self.prev_centers:
+                movement = np.linalg.norm(center - self.prev_centers[i])
+                if movement > self.movement_threshold:
+                    player_name = players.get(i, f"Player {i+1}")
+                    print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")
+                    eliminated_this_round.add(i)
 
+        self.prev_centers = current_centers
+        return current_centers, eliminated_this_round
 
-def run():
-    cap, model, movement_threshold, prev_centers = initialize_tracker()
-    while True:
-        ret, frame = cap.read()
-        
-        results = get_pose_estimation(frame, model)
-        draw_keypoints(results)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    def draw_keypoints(self, results):
+        annotated_frame = results[0].plot()
+        cv2.imshow("Red Light, Green Light", annotated_frame)
+        cv2.waitKey(1)
 
-        current_centers = process_keypoints(results, prev_centers, movement_threshold)
-        process_boxes(results)
-        prev_centers = current_centers
+    def on_green(self):
+        self.red_light = False
 
-        
-    end_tacker(cap)
+    def on_red(self, players):
+        self.red_light = True
+        ret, frame = self.cap.read()
+        if not ret:
+            return set()
+
+        results = self.get_pose_estimation(frame)
+        self.draw_keypoints(results)
+        _, eliminated_this_round = self.process_keypoints(results, players)
+
+        self.eliminated.update(eliminated_this_round)  # Update eliminated players
+        return self.eliminated  # Return updated elimination list
+
+    def run(self):
+        print("\nDetecting number of players...")
+        ret, frame = self.cap.read()
+        if not ret:
+            print("❌ Camera not available")
+            return
+
+        results = self.get_pose_estimation(frame)
+        keypoints = self.extract_keypoints(results)
+        num_players = len(keypoints) if keypoints is not None else 1
+        print(f"\nDetected {num_players} players.")
+
+        # Get player names
+        self.players = get_player_names(num_players)
+
+        # Start the game
+        countdown()
+        red_light_green_light_loop(
+            duration=60,
+            on_green=self.on_green,
+            on_red=self.on_red,
+            players=self.players
+        )
+
+        self.cap.release()
+        cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    run()
+    detector = MotionDetector()
+    detector.run()
