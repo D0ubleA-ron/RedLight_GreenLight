@@ -15,3 +15,5 @@
 
 # Install the specified packages with specific versions
 ``pip install numpy==1.26.0 opencv-python==4.11.0.86 ultralytics==8.3.88``
+
+# Run motion_detection.py
