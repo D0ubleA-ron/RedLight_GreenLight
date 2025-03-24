@@ -3,6 +3,7 @@ import numpy as np
 from ultralytics import YOLO
 import sys
 import os
+import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from game import countdown, red_light_green_light_loop, get_player_names
@@ -11,7 +12,7 @@ class MotionDetector:
     def __init__(self):
         self.cap = cv2.VideoCapture(0)
         self.model = YOLO("yolov8n-pose.pt")
-        self.movement_threshold = 30.0
+        self.movement_threshold = 100.0
         self.prev_centers = {}
         self.red_light = False
         self.players = {}  # Store player names
@@ -73,19 +74,55 @@ class MotionDetector:
 
     def on_green(self):
         self.red_light = False
-
-    def on_red(self, players):
+    
+    def on_red(self, players, red_duration):
         self.red_light = True
+
+        # Capture baseline positions immediately when red light starts.
         ret, frame = self.cap.read()
         if not ret:
             return set()
-
         results = self.get_pose_estimation(frame)
-        self.draw_keypoints(results)
-        _, eliminated_this_round = self.process_keypoints(results, players)
+        baseline_centers = {}
+        keypoints = self.extract_keypoints(results)
+        if keypoints is not None:
+            for i, person in enumerate(keypoints):
+                if i in self.eliminated:
+                    continue
+                valid_kp = self.filter_valid_keypoints(person)
+                center = self.compute_center(person, valid_kp)
+                baseline_centers[i] = center
 
-        self.eliminated.update(eliminated_this_round)  # Update eliminated players
-        return self.eliminated  # Return updated elimination list
+        eliminated_this_round = set()
+        start_time = time.time()
+
+        # Continuously capture frames during the red light period.
+        while time.time() - start_time < red_duration:
+            ret, frame = self.cap.read()
+            if not ret:
+                continue
+
+            results = self.get_pose_estimation(frame)
+            keypoints = self.extract_keypoints(results)
+            if keypoints is not None:
+                for i, person in enumerate(keypoints):
+                    if i in self.eliminated:
+                        continue
+                    valid_kp = self.filter_valid_keypoints(person)
+                    center = self.compute_center(person, valid_kp)
+                    if i in baseline_centers:
+                        movement = np.linalg.norm(center - baseline_centers[i])
+                        if movement > self.movement_threshold:
+                            player_name = players.get(i, f"Player {i+1}")
+                            print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")
+                            eliminated_this_round.add(i)
+            time.sleep(0.1)  # Check approximately every 0.1 seconds
+
+        self.eliminated.update(eliminated_this_round)
+        return eliminated_this_round
+
+
+
 
     def run(self):
         print("\nDetecting number of players...")

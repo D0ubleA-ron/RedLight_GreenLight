@@ -34,7 +34,7 @@ def red_light_green_light_loop(duration, on_green, on_red, players):
         # RED LIGHT
         red_duration = random.uniform(3, 7)
         print("\n🔴 RED LIGHT! (Stop!)")
-        eliminated_players.update(on_red(players))  # Update eliminated players
-        time.sleep(red_duration)
+        eliminated_players.update(on_red(players, red_duration))  # Update eliminated players
+        
 
     print("\n🏁 Game Over!")
