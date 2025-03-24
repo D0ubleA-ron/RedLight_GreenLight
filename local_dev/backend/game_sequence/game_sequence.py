@@ -1,115 +1,172 @@
-# run pip install numpy==1.26.0 opencv-python==4.11.0.86 ultralytics==8.3.88 --break-system-packages
 import cv2
 import numpy as np
-from ultralytics import YOLO
-from picamera2 import Picamera2
+import time
+import random
+import os
+import threading
+from playsound import playsound
 
-# Function to get pose estimation from the model
-def get_pose_estimation(frame, model):
-    results = model(frame, verbose=False)
-    return results
+AUDIO_DIR = "Audio Files"
 
-# Function to extract keypoints from the results
-def extract_keypoints(results):
-    if results[0].keypoints is not None:
-        keypoints = results[0].keypoints.data if hasattr(results[0].keypoints, 'data') else results[0].keypoints
-        if hasattr(keypoints, 'cpu'):
-            keypoints = keypoints.cpu().numpy()
-        return keypoints
-    return None
+class RedLightGreenLightGame:
+    def __init__(self, cap, model, player_names, movement_threshold=10.0):
+        self.cap = cap
+        self.model = model
+        self.movement_threshold = movement_threshold
+        self.prev_centers = {}  # {player_name: center}
+        self.player_names = player_names  # List of names
+        self.player_status = {name: "alive" for name in player_names}
+        self.player_ids = {}  # YOLO ID → player_name (based on matching)
+        self.state = "Green"
+        self.red_duration = 3
+        self.green_duration = 3
+        self.last_switch = time.time()
+        self.red_audio_thread = None
+        self.playing_red_audio = False
 
-# Function to filter valid keypoints
-def filter_valid_keypoints(person, conf_threshold=0.5):
-    return [kp for kp in person if kp[2] > conf_threshold]
+    def play_audio(self, filename):
+        path = os.path.join(AUDIO_DIR, filename)
+        if os.path.exists(path):
+            playsound(path, block=True)
 
-# Function to compute center of the person
-def compute_center(person, valid_keypoints):
-    if valid_keypoints:
-        valid_keypoints = np.array(valid_keypoints)
-        center = np.mean(valid_keypoints[:, :2], axis=0)
-    else:
-        center = np.mean(person[:, :2], axis=0)
-    return center
+    def play_loop_audio(self, filename):
+        path = os.path.join(AUDIO_DIR, filename)
+        while self.playing_red_audio:
+            playsound(path, block=True)
 
-# Function to compare movement of the person
-def compare_movement(i, center, prev_centers, movement_threshold):
-    if i in prev_centers:
-        movement = np.linalg.norm(center - prev_centers[i])
-        if movement > movement_threshold:
-            print(f"Person {i} has moved {movement:.2f} pixels")
-        else:
-            print(f"Person {i} movement insignificant: {movement:.2f} pixels")
-    else:
-        print(f"Person {i} detected for the first time.")
+    def start_red_audio(self):
+        self.playing_red_audio = True
+        self.red_audio_thread = threading.Thread(target=self.play_loop_audio, args=("redlight_countdown.mp3",), daemon=True)
+        self.red_audio_thread.start()
 
-# Function to process keypoints
-def process_keypoints(results, prev_centers, movement_threshold):
-    current_centers = {}
-    keypoints = extract_keypoints(results)
-    if keypoints is None:
-        return current_centers
+    def stop_red_audio(self):
+        self.playing_red_audio = False
+        if self.red_audio_thread is not None:
+            self.red_audio_thread.join()
 
-    for i, person in enumerate(keypoints):
-        valid_keypoints = filter_valid_keypoints(person)
-        center = compute_center(person, valid_keypoints)
-        current_centers[i] = center
-        print(f"Person {i} center at: {center}")
-        compare_movement(i, center, prev_centers, movement_threshold)
-    
-    return current_centers
+    def switch_light(self):
+        now = time.time()
+        if self.state == "Green" and now - self.last_switch > self.green_duration:
+            self.state = "Red"
+            self.last_switch = now
+            print("\nRED LIGHT! DO NOT MOVE!")
+            self.start_red_audio()
+        elif self.state == "Red" and now - self.last_switch > self.red_duration:
+            self.state = "Green"
+            self.last_switch = now
+            print("\nGREEN LIGHT! YOU CAN MOVE!")
+            self.stop_red_audio()
 
-# Function to process bounding boxes
-def process_boxes(results):
-    if hasattr(results[0], 'boxes') and results[0].boxes is not None:
-        boxes = (results[0].boxes.xyxy.data 
-                 if hasattr(results[0].boxes.xyxy, 'data') 
-                 else results[0].boxes.xyxy)
-        if hasattr(boxes, 'cpu'):
-            boxes = boxes.cpu().numpy()
-        for i, box in enumerate(boxes):
-            print(f"Person {i} bounding box: {box.tolist()}")
+    def match_players(self, centers):
+        matched = {}
+        used = set()
 
-# Function to initialize the tracker        
-def initialize_tracker():
-    picam2 = Picamera2()
-    picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480)}))
-    picam2.start()
-    model = YOLO("yolov8n-pose.pt")
-    movement_threshold = 10.0
-    prev_centers = {}
-    return picam2, model, movement_threshold, prev_centers
+        for name in self.player_names:
+            if self.player_status[name] == "out":
+                continue
+            prev = self.prev_centers.get(name)
+            if prev is None:
+                for pid, center in centers.items():
+                    if pid not in used:
+                        matched[pid] = name
+                        used.add(pid)
+                        break
+            else:
+                best_pid = None
+                best_dist = float("inf")
+                for pid, center in centers.items():
+                    if pid in used:
+                        continue
+                    dist = np.linalg.norm(center - prev)
+                    if dist < best_dist:
+                        best_dist = dist
+                        best_pid = pid
+                if best_pid is not None:
+                    matched[best_pid] = name
+                    used.add(best_pid)
 
-# Function to end the tracker
-def end_tracker(picam2):
-    picam2.stop()
-    cv2.destroyAllWindows()
+        return matched
 
-# Function to draw keypoints
-def draw_keypoints(results):
-    annotated_frame = results[0].plot()
-    cv2.imshow('YOLOv8 Pose Detection', annotated_frame)
+    def update_players(self, centers):
+        matched = self.match_players(centers)
 
-def run():
-    picam2, model, movement_threshold, prev_centers = initialize_tracker()
-    while True:
-        # Capture a frame using picamera2
-        frame = picam2.capture_array()
+        for pid, name in matched.items():
+            if self.player_status[name] == "out":
+                continue
 
-        # Convert the frame from 4 channels (RGBA) to 3 channels (RGB)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGBA2RGB)
+            center = centers[pid]
+            prev_center = self.prev_centers.get(name)
 
-        # Perform pose estimation
-        results = get_pose_estimation(frame, model)
-        draw_keypoints(results)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            if prev_center is not None:
+                movement = np.linalg.norm(center - prev_center)
+                if self.state == "Red" and movement > self.movement_threshold:
+                    self.player_status[name] = "out"
+                    print(f"{name} moved during RED LIGHT and is ELIMINATED! (Movement: {movement:.2f})")
+                    self.play_audio("eliminated.mp3")
+                elif self.state == "Green":
+                    print(f"{name} is moving freely. (Movement: {movement:.2f})")
+            else:
+                print(f"{name} is standing still.")
 
-        # Process keypoints and bounding boxes
-        current_centers = process_keypoints(results, prev_centers, movement_threshold)
-        process_boxes(results)
-        prev_centers = current_centers
+            self.prev_centers[name] = center
 
-    end_tracker(picam2)
+    def is_game_over(self):
+        alive = [s for s in self.player_status.values() if s == "alive"]
+        return len(alive) <= 1 and len(self.player_status) > 0
 
-if __name__ == '__main__':
-    run()
+    def print_winner(self):
+        for name, status in self.player_status.items():
+            if status == "alive":
+                print(f"\n{name} is the WINNER!")
+                self.play_audio("game_end.mp3")
+                return
+        print("\nNo winners. Everyone got eliminated.")
+        self.play_audio("game_end.mp3")
+
+    def run(self):
+        print("Game Started: Red Light, Green Light!\n")
+        self.play_audio("game_start_countdown.mp3")
+        print("GREEN LIGHT! YOU CAN MOVE!")
+
+        red_green_cycles = 0
+        force_min_cycles = len(self.player_names) == 1
+
+        while True:
+            ret, frame = self.cap.read()
+            if not ret:
+                print("Failed to read frame.")
+                break
+
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = self.model(frame, verbose=False)
+            keypoints = results[0].keypoints
+            if keypoints is None:
+                continue
+
+            keypoints = keypoints.data.cpu().numpy()
+            centers = {}
+            for i, person in enumerate(keypoints):
+                valid = person[person[:, 2] > 0.5] if person.ndim == 2 else person
+                center = np.mean(valid[:, :2], axis=0) if len(valid) > 0 else None
+                if center is not None:
+                    centers[i] = center
+
+            prev_state = self.state
+            self.switch_light()
+
+            if prev_state == "Red" and self.state == "Green":
+                red_green_cycles += 1
+
+            self.update_players(centers)
+
+            if force_min_cycles:
+                if red_green_cycles >= 2:
+                    break
+            else:
+                if self.is_game_over():
+                    break
+
+        self.stop_red_audio()
+        self.print_winner()
+        self.cap.release()
+        cv2.destroyAllWindows()
