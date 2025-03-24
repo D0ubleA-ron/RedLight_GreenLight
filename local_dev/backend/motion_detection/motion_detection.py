@@ -12,7 +12,7 @@ class MotionDetector:
     def __init__(self):
         self.cap = cv2.VideoCapture(0)
         self.model = YOLO("yolov8n-pose.pt")
-        self.movement_threshold = 100.0
+        self.movement_threshold =10.0
         self.prev_centers = {}
         self.red_light = False
         self.players = {}  # Store player names
@@ -59,6 +59,7 @@ class MotionDetector:
 
             if self.red_light and i in self.prev_centers:
                 movement = np.linalg.norm(center - self.prev_centers[i])
+                print(movement)
                 if movement > self.movement_threshold:
                     player_name = players.get(i, f"Player {i+1}")
                     print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")

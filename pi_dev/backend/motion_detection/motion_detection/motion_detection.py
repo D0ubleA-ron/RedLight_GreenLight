@@ -74,7 +74,7 @@ def initialize_tracker():
     picam2.configure(picam2.create_preview_configuration(main={"size": (640, 480)}))
     picam2.start()
     model = YOLO("yolov8n-pose.pt")
-    movement_threshold = 10.0
+    movement_threshold = 60.0
     prev_centers = {}
     return picam2, model, movement_threshold, prev_centers
 
