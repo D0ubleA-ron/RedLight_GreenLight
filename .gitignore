@@ -1,1 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+
+# Environment variables / secrets
+.env
+
+# macOS system files
 .DS_Store
+
+# VSCode settings
+.vscode/
+
+# JetBrains IDEs (PyCharm, etc.)
+.idea/
+
+# Log files
+*.log
+
+# Test coverage
+.coverage
+htmlcov/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Media / temporary outputs
+*.mp3
+*.wav
+
+# YOLO or model artifacts
+runs/
+*.pt
