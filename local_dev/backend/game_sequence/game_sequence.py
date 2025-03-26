@@ -1,12 +1,13 @@
+import requests
 import cv2
 import numpy as np
 import time
 import random
 import os
 import threading
-from playsound import playsound
 
-AUDIO_DIR = "Audio Files"
+AUDIO_DIR = "audio_files"
+AUDIO_SERVER_URL = "http://10.0.0.34:5001/play"
 
 class RedLightGreenLightGame:
     def __init__(self, cap, model, player_names, movement_threshold=10.0):
@@ -25,14 +26,25 @@ class RedLightGreenLightGame:
         self.playing_red_audio = False
 
     def play_audio(self, filename):
-        path = os.path.join(AUDIO_DIR, filename)
-        if os.path.exists(path):
-            playsound(path, block=True)
+       try:
+            response = requests.post(
+                AUDIO_SERVER_URL,
+                json={"filename": filename},
+                timeout=5
+            )
+            if response.status_code != 200:
+                print(f"[Audio Server] Error playing {filename}: {response.text}")
+            else:
+                print(f"[Audio Server] Played {filename} successfully.")
+       except Exception as e:
+            print(f"[Audio Server] Exception while playing {filename}: {e}")
 
     def play_loop_audio(self, filename):
-        path = os.path.join(AUDIO_DIR, filename)
+        # Optional: implement repeated POSTs if you want true looping,
+        # or just play a long track on repeat via the server
         while self.playing_red_audio:
-            playsound(path, block=True)
+            self.play_audio(filename)
+            time.sleep(3)  # Delay between re-triggers
 
     def start_red_audio(self):
         self.playing_red_audio = True
@@ -124,9 +136,9 @@ class RedLightGreenLightGame:
         self.play_audio("game_end.mp3")
 
     def run(self):
-        print("Game Started: Red Light, Green Light!\n")
-        self.play_audio("game_start_countdown.mp3")
-        print("GREEN LIGHT! YOU CAN MOVE!")
+        for i in range (3,0,-1):
+            print(f"{i}...")
+            time.sleep(1)
 
         red_green_cycles = 0
         force_min_cycles = len(self.player_names) == 1
