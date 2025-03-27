@@ -4,15 +4,23 @@ from ultralytics import YOLO
 import sys
 import os
 import time
+import threading
+from playsound import playsound
+
+# Add parent directory to sys.path to import game utilities
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from game import countdown, red_light_green_light_loop, get_player_names
+
+def play_sound(audio_file):
+    """Plays an audio file in a separate thread."""
+    threading.Thread(target=playsound, args=(audio_file,), daemon=True).start()
 
 class MotionDetector:
     def __init__(self):
         self.cap = cv2.VideoCapture(0)
         self.model = YOLO("yolov8n-pose.pt")
-        self.movement_threshold =10.0
+        self.movement_threshold = 10.0
         self.prev_centers = {}
         self.red_light = False
         self.players = {}  # Store player names
@@ -64,7 +72,6 @@ class MotionDetector:
                     player_name = players.get(i, f"Player {i+1}")
                     print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")
                     eliminated_this_round.add(i)
-
         self.prev_centers = current_centers
         return current_centers, eliminated_this_round
 
@@ -75,7 +82,7 @@ class MotionDetector:
 
     def on_green(self):
         self.red_light = False
-    
+
     def on_red(self, players, red_duration):
         self.red_light = True
 
@@ -119,11 +126,11 @@ class MotionDetector:
                             eliminated_this_round.add(i)
             time.sleep(0.1)  # Check approximately every 0.1 seconds
 
+        # If any players were eliminated during this red light period, play the elimination sound.
+        if eliminated_this_round:
+            play_sound('/mnt/data/eliminated.mp3')
         self.eliminated.update(eliminated_this_round)
         return eliminated_this_round
-
-
-
 
     def run(self):
         print("\nDetecting number of players...")
@@ -140,7 +147,7 @@ class MotionDetector:
         # Get player names
         self.players = get_player_names(num_players)
 
-        # Start the game
+        # Start the game with a countdown that plays an audio file
         countdown()
         red_light_green_light_loop(
             duration=60,
