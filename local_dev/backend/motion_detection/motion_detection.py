@@ -9,14 +9,12 @@ import threading
 
 # Add parent directory to sys.path to import game utilities
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from game import countdown, red_light_green_light_loop, get_player_names
 
 def play_sound(audio_file):
-    sound1 = pygame.mixer.Sound(audio_file)
-    channel = sound1.play()
-    
-
+    # Generic sound player using the default channel
+    sound = pygame.mixer.Sound(audio_file)
+    sound.play()
 
 class MotionDetector:
     def __init__(self):
@@ -30,6 +28,8 @@ class MotionDetector:
         # Attributes for continuous baseline detection
         self.baseline_captured = False
         self.baseline_centers = {}
+        # Flag to avoid overlapping elimination sounds
+        self.elim_sound_playing = False
 
     def get_pose_estimation(self, frame):
         results = self.model(frame, verbose=False)
@@ -37,11 +37,8 @@ class MotionDetector:
 
     def extract_keypoints(self, results):
         if results[0].keypoints is not None:
-            keypoints = (
-                results[0].keypoints.data
-                if hasattr(results[0].keypoints, "data")
-                else results[0].keypoints
-            )
+            keypoints = (results[0].keypoints.data if hasattr(results[0].keypoints, "data")
+                         else results[0].keypoints)
             if hasattr(keypoints, "cpu"):
                 keypoints = keypoints.cpu().numpy()
             return keypoints
@@ -66,14 +63,29 @@ class MotionDetector:
 
     def set_green(self):
         self.red_light = False
-        print("Green Light")
+        
 
     def set_red(self, red_duration):
         self.red_light = True
         self.baseline_captured = False  # Ensure new baseline is captured
-        print("Red Light")
+        
         time.sleep(red_duration)
         self.red_light = False
+
+    def play_elimination_sound(self):
+        # Only trigger if no elimination sound is currently playing
+        if not self.elim_sound_playing:
+            self.elim_sound_playing = True
+
+            def play_and_wait():
+                sound = pygame.mixer.Sound('eliminated.mp3')
+                channel = sound.play()
+                # Block until the sound finishes playing
+                while channel.get_busy():
+                    time.sleep(0.01)
+                self.elim_sound_playing = False
+
+            threading.Thread(target=play_and_wait, daemon=True).start()
 
     def run(self):
         print("\nDetecting number of players...")
@@ -89,9 +101,9 @@ class MotionDetector:
 
         # Get player names
         self.players = get_player_names(num_players)
-
         # Start the game with a countdown that plays an audio file
         countdown()
+        time.sleep(4)
 
         # Start red light green light loop in a daemon thread
         game_thread = threading.Thread(
@@ -112,7 +124,7 @@ class MotionDetector:
                 self.draw_keypoints(results)
 
                 if self.red_light:
-                    # On red light: capture baseline positions if not yet captured
+                    # Capture baseline positions if not yet captured
                     if not self.baseline_captured:
                         self.baseline_centers = {}
                         keypoints = self.extract_keypoints(results)
@@ -139,7 +151,8 @@ class MotionDetector:
                                         player_name = self.players.get(i, f"Player {i+1}")
                                         print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")
                                         self.eliminated.add(i)
-                                        play_sound('eliminated.mp3')
+                                        self.play_elimination_sound()
+                                        time.sleep(2)
                 else:
                     # Reset the baseline once green light returns
                     self.baseline_captured = False
@@ -148,6 +161,7 @@ class MotionDetector:
                 if len(self.eliminated) == len(self.players):
                     print("\n🚨 All players eliminated! Game Over!")
                     play_sound('game_end.mp3')
+                    time.sleep(4.5)
                     break
 
                 cv2.waitKey(1)

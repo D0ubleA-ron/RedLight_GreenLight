@@ -29,6 +29,15 @@ def on_press(key):
         game_won = True
         return False  # Stop the listener
 
+def interruptible_sleep(duration):
+    """Sleep in small increments, checking for the spacebar press."""
+    start = time.time()
+    while time.time() - start < duration:
+        if game_won:
+            return False  # Interrupted by spacebar press
+        time.sleep(0.1)
+    return True
+
 def red_light_green_light_loop(duration, on_green, on_red, players):
     global game_won
     print("\n🔫 Game Start!")
@@ -54,21 +63,29 @@ def red_light_green_light_loop(duration, on_green, on_red, players):
             play_sound('game_end.mp3')
             return
 
-        # GREEN LIGHT
+        # GREEN LIGHT phase
         green_duration = random.uniform(2, 5)
         print("\n🟢 GREEN LIGHT! (Move!)")
         on_green()  # Call your green light callback
         time.sleep(0.1)
-        time.sleep(green_duration)
+        if not interruptible_sleep(green_duration):
+            print("\nSpacebar pressed during GREEN LIGHT. Ending game!")
+            play_sound('game_end.mp3')
+            time.sleep(3)
+            return
 
-        # RED LIGHT
+        # RED LIGHT phase
         red_duration = random.uniform(2, 5)
         print("\n🔴 RED LIGHT! (Stop!)")
         time.sleep(0.1)
-        time.sleep(red_duration)
+        if not interruptible_sleep(red_duration):
+            print("\nSpacebar pressed during RED LIGHT. Ending game!")
+            play_sound('game_end.mp3')
+            time.sleep(3)
+            return
 
         # Call red light callback with just red_duration as argument.
         on_red(red_duration)
-        
+
     print("\n🏁 Game Over!")
     play_sound('game_end.mp3')
