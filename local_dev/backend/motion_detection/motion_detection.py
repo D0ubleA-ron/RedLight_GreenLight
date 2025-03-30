@@ -5,6 +5,7 @@ import sys
 import os
 import time
 import pygame
+import threading
 
 # Add parent directory to sys.path to import game utilities
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -13,18 +14,22 @@ from game import countdown, red_light_green_light_loop, get_player_names
 
 def play_sound(audio_file):
     sound1 = pygame.mixer.Sound(audio_file)
-    sound1.play()
+    channel = sound1.play()
+    
+
 
 class MotionDetector:
     def __init__(self):
         self.cap = cv2.VideoCapture(0)
         self.model = YOLO("yolov8n-pose.pt")
         self.movement_threshold = 100.0
-        self.prev_centers = {}
         self.red_light = False
-        self.players = {}  # Store player names
-        self.eliminated = set()  # Track eliminated players
+        self.players = {}         # Store player names
+        self.eliminated = set()   # Track eliminated players
         pygame.mixer.init()
+        # Attributes for continuous baseline detection
+        self.baseline_captured = False
+        self.baseline_centers = {}
 
     def get_pose_estimation(self, frame):
         results = self.model(frame, verbose=False)
@@ -32,8 +37,12 @@ class MotionDetector:
 
     def extract_keypoints(self, results):
         if results[0].keypoints is not None:
-            keypoints = results[0].keypoints.data if hasattr(results[0].keypoints, 'data') else results[0].keypoints
-            if hasattr(keypoints, 'cpu'):
+            keypoints = (
+                results[0].keypoints.data
+                if hasattr(results[0].keypoints, "data")
+                else results[0].keypoints
+            )
+            if hasattr(keypoints, "cpu"):
                 keypoints = keypoints.cpu().numpy()
             return keypoints
         return None
@@ -54,65 +63,17 @@ class MotionDetector:
         annotated_frame = results[0].plot()
         cv2.imshow("Red Light, Green Light", annotated_frame)
         cv2.waitKey(1)
-        
 
-    def on_green(self):
+    def set_green(self):
         self.red_light = False
-        # Optionally show overlay during green light too
-        ret, frame = self.cap.read()
-        if ret:
-            results = self.get_pose_estimation(frame)
-            self.draw_keypoints(results)
+        print("Green Light")
 
-    def on_red(self, players, red_duration):
+    def set_red(self, red_duration):
         self.red_light = True
-
-        # Capture baseline positions immediately when red light starts.
-        ret, frame = self.cap.read()
-        if not ret:
-            return set()
-        results = self.get_pose_estimation(frame)
-        baseline_centers = {}
-        keypoints = self.extract_keypoints(results)
-        if keypoints is not None:
-            for i, person in enumerate(keypoints):
-                if i in self.eliminated:
-                    continue
-                valid_kp = self.filter_valid_keypoints(person)
-                center = self.compute_center(person, valid_kp)
-                baseline_centers[i] = center
-
-        eliminated_this_round = set()
-        start_time = time.time()
-
-        # Continuously capture frames during the red light period.
-        while time.time() - start_time < red_duration:
-            ret, frame = self.cap.read()
-            if not ret:
-                continue
-
-            results = self.get_pose_estimation(frame)
-            keypoints = self.extract_keypoints(results)
-            if keypoints is not None:
-                for i, person in enumerate(keypoints):
-                    if i in self.eliminated:
-                        continue
-                    valid_kp = self.filter_valid_keypoints(person)
-                    center = self.compute_center(person, valid_kp)
-                    if i in baseline_centers:
-                        movement = np.linalg.norm(center - baseline_centers[i])
-                        if movement > self.movement_threshold:
-                            player_name = players.get(i, f"Player {i+1}")
-                            print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")
-                            eliminated_this_round.add(i)
-            # Update the video overlay with keypoints
-            self.draw_keypoints(results)
-            time.sleep(0.1)  # Check approximately every 0.1 seconds
-
-        if eliminated_this_round:
-            play_sound('eliminated.mp3')
-        self.eliminated.update(eliminated_this_round)
-        return eliminated_this_round
+        self.baseline_captured = False  # Ensure new baseline is captured
+        print("Red Light")
+        time.sleep(red_duration)
+        self.red_light = False
 
     def run(self):
         print("\nDetecting number of players...")
@@ -131,15 +92,70 @@ class MotionDetector:
 
         # Start the game with a countdown that plays an audio file
         countdown()
-        red_light_green_light_loop(
-            duration=60,
-            on_green=self.on_green,
-            on_red=self.on_red,
-            players=self.players
-        )
 
-        self.cap.release()
-        cv2.destroyAllWindows()
+        # Start red light green light loop in a daemon thread
+        game_thread = threading.Thread(
+            target=red_light_green_light_loop,
+            args=(60, self.set_green, self.set_red, self.players)
+        )
+        game_thread.daemon = True
+        game_thread.start()
+
+        try:
+            # Continuous frame capture loop regardless of light state
+            while game_thread.is_alive():
+                ret, frame = self.cap.read()
+                if not ret:
+                    continue
+
+                results = self.get_pose_estimation(frame)
+                self.draw_keypoints(results)
+
+                if self.red_light:
+                    # On red light: capture baseline positions if not yet captured
+                    if not self.baseline_captured:
+                        self.baseline_centers = {}
+                        keypoints = self.extract_keypoints(results)
+                        if keypoints is not None:
+                            for i, person in enumerate(keypoints):
+                                if i in self.eliminated:
+                                    continue
+                                valid_kp = self.filter_valid_keypoints(person)
+                                center = self.compute_center(person, valid_kp)
+                                self.baseline_centers[i] = center
+                        self.baseline_captured = True
+                    else:
+                        # Compare current positions against the baseline
+                        keypoints = self.extract_keypoints(results)
+                        if keypoints is not None:
+                            for i, person in enumerate(keypoints):
+                                if i in self.eliminated:
+                                    continue
+                                valid_kp = self.filter_valid_keypoints(person)
+                                center = self.compute_center(person, valid_kp)
+                                if i in self.baseline_centers:
+                                    movement = np.linalg.norm(center - self.baseline_centers[i])
+                                    if movement > self.movement_threshold:
+                                        player_name = self.players.get(i, f"Player {i+1}")
+                                        print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")
+                                        self.eliminated.add(i)
+                                        play_sound('eliminated.mp3')
+                else:
+                    # Reset the baseline once green light returns
+                    self.baseline_captured = False
+
+                # Check if all players have been eliminated
+                if len(self.eliminated) == len(self.players):
+                    print("\n🚨 All players eliminated! Game Over!")
+                    play_sound('game_end.mp3')
+                    break
+
+                cv2.waitKey(1)
+        except KeyboardInterrupt:
+            print("Game cancelled by user.")
+        finally:
+            self.cap.release()
+            cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     detector = MotionDetector()

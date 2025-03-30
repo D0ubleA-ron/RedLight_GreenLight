@@ -53,7 +53,7 @@ def red_light_green_light_loop(duration, on_green, on_red, players):
             print("\n🚨 All players eliminated! Game Over!")
             play_sound('game_end.mp3')
             return
-        
+
         # GREEN LIGHT
         green_duration = random.uniform(2, 5)
         print("\n🟢 GREEN LIGHT! (Move!)")
@@ -66,8 +66,9 @@ def red_light_green_light_loop(duration, on_green, on_red, players):
         print("\n🔴 RED LIGHT! (Stop!)")
         time.sleep(0.1)
         time.sleep(red_duration)
-        
-        eliminated_players.update(on_red(players, red_duration))  # Update eliminated players
 
+        # Call red light callback with just red_duration as argument.
+        on_red(red_duration)
+        
     print("\n🏁 Game Over!")
     play_sound('game_end.mp3')
