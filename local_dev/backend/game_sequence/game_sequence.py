@@ -193,6 +193,9 @@ class RedLightGreenLightGame:
             print(f"{i}...")
             time.sleep(1)
 
+        solo_mode = len(self.player_names) == 1
+        red_green_cycles = 0
+
         while True:
             ret, frame = self.cap.read()
             if not ret:
@@ -216,10 +219,17 @@ class RedLightGreenLightGame:
             prev_state = self.state
             self.switch_light()
 
+            if prev_state == "Red" and self.state == "Green":
+                red_green_cycles += 1
+
             self.update_players(centers)
 
-            if self.is_game_over():
-                break
+            if solo_mode:
+                if red_green_cycles >= 3 or self.is_game_over():
+                    break
+            else:
+                if self.is_game_over():
+                    break
 
         self.stop_red_audio()
         self.print_winner()
