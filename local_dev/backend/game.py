@@ -98,7 +98,7 @@ def red_light_green_light_loop(duration, on_green, on_red, players):
 
         # RED LIGHT phase
         red_duration = random.uniform(2, 5)
-        play_sound('red_lightcountdown.mp3', wait=True)
+        play_sound('redlight_countdown.mp3', wait=True)
         
         print("\n🔴 RED LIGHT! (Stop!)")
         red_led.on()     # Turn on red LED
