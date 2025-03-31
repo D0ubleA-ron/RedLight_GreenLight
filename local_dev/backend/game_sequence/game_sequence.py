@@ -131,9 +131,9 @@ class RedLightGreenLightGame:
                         if name in self.name_to_pose_id:
                             del self.name_to_pose_id[name]
                 else:
-                self.pose_disappear_counter[name] = 1
+                    self.pose_disappear_counter[name] = 1
 
-    return matched
+        return matched
 
 
     def update_players(self, centers):
