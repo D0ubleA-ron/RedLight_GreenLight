@@ -9,7 +9,7 @@ def main():
         raise RuntimeError("Cannot open webcam stream.")
 
     model = YOLO("yolov8n-pose.pt")
-    game = RedLightGreenLightGame(cap, model, player_names=player_names)
+    game = RedLightGreenLightGame(cap, model)
     game.run()
 
 if __name__ == "__main__":
