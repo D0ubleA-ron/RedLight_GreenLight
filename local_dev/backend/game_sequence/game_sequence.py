@@ -6,7 +6,7 @@ import random
 import os
 import threading
 
-AUDIO_DIR = "audio_files"
+AUDIO_DIR = "audio_clips"
 AUDIO_SERVER_URL = "http://10.0.0.34:5001/play"
 
 class RedLightGreenLightGame:
