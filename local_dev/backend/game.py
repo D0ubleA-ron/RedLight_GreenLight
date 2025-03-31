@@ -11,9 +11,14 @@ green_led = LED(22)
 # Global flag to detect game win
 game_won = False
 
-def play_sound(audio_file):
-    sound1 = pygame.mixer.Sound(audio_file)
-    sound1.play()
+def play_sound(audio_file, wait=False):
+    sound = pygame.mixer.Sound(audio_file)
+    channel = sound.play()
+    if wait:
+        # Wait until the sound finishes playing
+        while channel.get_busy():
+            time.sleep(0.1)
+    return channel
     
 def get_player_names(num_players):
     players = {}
@@ -76,6 +81,7 @@ def red_light_green_light_loop(duration, on_green, on_red, players):
             return
 
         # GREEN LIGHT phase
+        
         green_duration = random.uniform(2, 5)
         print("\n🟢 GREEN LIGHT! (Move!)")
         green_led.on()   # Turn on green LED
@@ -92,6 +98,8 @@ def red_light_green_light_loop(duration, on_green, on_red, players):
 
         # RED LIGHT phase
         red_duration = random.uniform(2, 5)
+        play_sound('red_lightcountdown.mp3', wait=True)
+        
         print("\n🔴 RED LIGHT! (Stop!)")
         red_led.on()     # Turn on red LED
         green_led.off()  # Ensure green LED is off
