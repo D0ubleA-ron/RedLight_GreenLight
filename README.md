@@ -1,3 +1,4 @@
+
 # RedLight_GreenLight
 
 This project contains the code for the red light green light game from Squid Games. Based on the YOLO model, this code is built to be run on a raspberry PI or your local device.
@@ -11,3 +12,4 @@ This project contains the code for the red light green light game from Squid Gam
    b. `cd backend`
    c. `cd motion_detection`
 4. Now you are in the right folder. Start the game using the following command `python motion_detection.py` and have fun!
+
