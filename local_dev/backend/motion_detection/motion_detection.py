@@ -4,9 +4,16 @@ from ultralytics import YOLO
 import sys
 import os
 import time
+import pygame
+
+# Add parent directory to sys.path to import game utilities
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from game import countdown, red_light_green_light_loop, get_player_names
+
+def play_sound(audio_file):
+    sound1 = pygame.mixer.Sound(audio_file)
+    sound1.play()
 
 class MotionDetector:
     def __init__(self):
@@ -17,6 +24,7 @@ class MotionDetector:
         self.red_light = False
         self.players = {}  # Store player names
         self.eliminated = set()  # Track eliminated players
+        pygame.mixer.init()
 
     def get_pose_estimation(self, frame):
         results = self.model(frame, verbose=False)
@@ -41,40 +49,21 @@ class MotionDetector:
             center = np.mean(person[:, :2], axis=0)
         return center
 
-    def process_keypoints(self, results, players):
-        keypoints = self.extract_keypoints(results)
-        if keypoints is None:
-            return {}, set()
-
-        current_centers = {}
-        eliminated_this_round = set()
-
-        for i, person in enumerate(keypoints):
-            if i in self.eliminated:  # Skip eliminated players
-                continue
-
-            valid_kp = self.filter_valid_keypoints(person)
-            center = self.compute_center(person, valid_kp)
-            current_centers[i] = center
-
-            if self.red_light and i in self.prev_centers:
-                movement = np.linalg.norm(center - self.prev_centers[i])
-                if movement > self.movement_threshold:
-                    player_name = players.get(i, f"Player {i+1}")
-                    print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")
-                    eliminated_this_round.add(i)
-
-        self.prev_centers = current_centers
-        return current_centers, eliminated_this_round
-
     def draw_keypoints(self, results):
+        """Display the annotated frame with keypoints overlay."""
         annotated_frame = results[0].plot()
         cv2.imshow("Red Light, Green Light", annotated_frame)
         cv2.waitKey(1)
+        
 
     def on_green(self):
         self.red_light = False
-    
+        # Optionally show overlay during green light too
+        ret, frame = self.cap.read()
+        if ret:
+            results = self.get_pose_estimation(frame)
+            self.draw_keypoints(results)
+
     def on_red(self, players, red_duration):
         self.red_light = True
 
@@ -116,13 +105,14 @@ class MotionDetector:
                             player_name = players.get(i, f"Player {i+1}")
                             print(f"❌ {player_name} MOVED during RED LIGHT! ({movement:.2f} pixels)")
                             eliminated_this_round.add(i)
+            # Update the video overlay with keypoints
+            self.draw_keypoints(results)
             time.sleep(0.1)  # Check approximately every 0.1 seconds
 
+        if eliminated_this_round:
+            play_sound('eliminated.mp3')
         self.eliminated.update(eliminated_this_round)
         return eliminated_this_round
-
-
-
 
     def run(self):
         print("\nDetecting number of players...")
@@ -139,7 +129,7 @@ class MotionDetector:
         # Get player names
         self.players = get_player_names(num_players)
 
-        # Start the game
+        # Start the game with a countdown that plays an audio file
         countdown()
         red_light_green_light_loop(
             duration=60,

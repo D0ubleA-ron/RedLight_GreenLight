@@ -1,6 +1,15 @@
 import time
 import random
+import pygame
+from pynput import keyboard
 
+# Global flag to detect game win
+game_won = False
+
+def play_sound(audio_file):
+    sound1 = pygame.mixer.Sound(audio_file)
+    sound1.play()
+    
 def get_player_names(num_players):
     players = {}
     print("\nEnter player names:")
@@ -10,31 +19,55 @@ def get_player_names(num_players):
     return players
 
 def countdown(seconds=5):
-    print("Game starting in...")
-    for i in range(seconds, 0, -1):
-        print(i)
-        time.sleep(1)
+    # Play game start countdown audio
+    play_sound('game_start_countdown.mp3')
+
+def on_press(key):
+    global game_won
+    if key == keyboard.Key.space:
+        # Set flag and stop listener
+        game_won = True
+        return False  # Stop the listener
 
 def red_light_green_light_loop(duration, on_green, on_red, players):
+    global game_won
     print("\n🔫 Game Start!")
     start_time = time.time()
     eliminated_players = set()  # Track eliminated players
 
+    # Start the keyboard listener in a non-blocking way
+    listener = keyboard.Listener(on_press=on_press)
+    listener.start()
+
     while time.time() - start_time < duration:
-        if len(eliminated_players) == len(players):  # Check if all are eliminated
-            print("\n🚨 All players eliminated! Game Over!")
+        if game_won:
+            print("\n🏁 Game Won!")
+            play_sound('game_end.mp3')
             return
 
+        if len(eliminated_players) == len(players):  # Check if all are eliminated
+            if len(players) == 1:
+                print("\n🏆 Player {} wins!".format(list(players.keys())[0]))
+                play_sound('game_end.mp3')
+                return
+            print("\n🚨 All players eliminated! Game Over!")
+            play_sound('game_end.mp3')
+            return
+        
         # GREEN LIGHT
-        green_duration = random.uniform(5, 10)
+        green_duration = random.uniform(2, 5)
         print("\n🟢 GREEN LIGHT! (Move!)")
-        on_green()
+        on_green()  # Call your green light callback
+        time.sleep(0.1)
         time.sleep(green_duration)
 
         # RED LIGHT
-        red_duration = random.uniform(3, 7)
+        red_duration = random.uniform(2, 5)
         print("\n🔴 RED LIGHT! (Stop!)")
-        eliminated_players.update(on_red(players, red_duration))  # Update eliminated players
+        time.sleep(0.1)
+        time.sleep(red_duration)
         
+        eliminated_players.update(on_red(players, red_duration))  # Update eliminated players
 
     print("\n🏁 Game Over!")
+    play_sound('game_end.mp3')
