@@ -3,6 +3,7 @@ import numpy as np
 import time
 import os
 import threading
+import random
 import pygame
 
 AUDIO_DIR = "audio_clips"
@@ -164,12 +165,14 @@ class RedLightGreenLightGame:
         if self.state == "Green" and now - self.last_switch > self.green_duration:
             self.state = "Red"
             self.last_switch = now
-            print("\n🔴 RED LIGHT! DO NOT MOVE!")
+            self.red_duration = random.randint(10, 15)
+            print(f"\n🔴 RED LIGHT for {self.red_duration} seconds! DO NOT MOVE!")
             self.start_red_audio()
         elif self.state == "Red" and now - self.last_switch > self.red_duration:
             self.state = "Green"
             self.last_switch = now
-            print("\n🟢 GREEN LIGHT! YOU CAN MOVE!")
+            self.green_duration = random.randint(10, 15)
+            print(f"\n🟢 GREEN LIGHT for {self.green_duration} seconds! YOU CAN MOVE!")
             self.stop_red_audio()
 
     def is_game_over(self):
