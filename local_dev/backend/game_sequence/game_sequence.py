@@ -118,19 +118,19 @@ class RedLightGreenLightGame:
                         self.pose_disappear_counter[best_match] = 0
                         used_names.add(best_match)
 
-    # Handle disappeared poses
-    for name in self.player_names:
-        if name not in used_names:
-            if name in self.pose_disappear_counter:
-                self.pose_disappear_counter[name] += 1
-                if self.pose_disappear_counter[name] >= self.max_disappear_frames:
-                    # Reset mappings
-                    pid = self.name_to_pose_id.get(name)
-                    if pid in self.pose_id_to_name:
-                        del self.pose_id_to_name[pid]
-                    if name in self.name_to_pose_id:
-                        del self.name_to_pose_id[name]
-            else:
+        # Handle disappeared poses
+        for name in self.player_names:
+            if name not in used_names:
+                if name in self.pose_disappear_counter:
+                    self.pose_disappear_counter[name] += 1
+                    if self.pose_disappear_counter[name] >= self.max_disappear_frames:
+                        # Reset mappings
+                        pid = self.name_to_pose_id.get(name)
+                        if pid in self.pose_id_to_name:
+                            del self.pose_id_to_name[pid]
+                        if name in self.name_to_pose_id:
+                            del self.name_to_pose_id[name]
+                else:
                 self.pose_disappear_counter[name] = 1
 
     return matched
