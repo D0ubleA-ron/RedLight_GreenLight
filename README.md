@@ -13,3 +13,6 @@ This project contains the code for the red light green light game from Squid Gam
    c. `cd motion_detection`
 4. Now you are in the right folder. Start the game using the following command `python motion_detection.py` and have fun!
 
+### Demo Video
+
+https://github.com/user-attachments/assets/52a9bc77-babf-485c-b165-da5e9e331dd2
