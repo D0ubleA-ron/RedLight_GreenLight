@@ -1,17 +1,17 @@
 # RedLight_GreenLight
 
 ## Table of Contents
-- Introduction
-- How Does This Work?
-- Project Planning
-- Credits
-- Design Process
-- Hardware Decisions
-- Conclusions
-- How to Run This Locally
-- Demo Video
-- Hardware Schematic
-- UML Diagram
+- [Introduction](#introduction)
+- [How Does This Work?](#how-does-this-work)
+- [Project Planning](#project-planning)
+- [Credits](#credits)
+- [Design Process](#design-process)
+- [Hardware Decisions](#hardware-decisions)
+- [Conclusions](#conclusions)
+- [How to Run This Locally](#how-to-run-this-locally)
+- [Demo Video](#demo-video)
+- [Hardware Schematic](#hardware-schematic)
+- [UML Diagram](#uml-diagram)
 
 ## Introduction
 This project contains the code for the Red Light, Green Light game inspired by *Squid Games*. It leverages the YOLOv8n model and is designed to run on a Raspberry Pi or a local device. The project not only serves as an interactive game but also demonstrates real-time video processing and human motion detection.
