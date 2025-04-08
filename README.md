@@ -28,12 +28,7 @@ System overview:
 4. Now you are in the right folder. Start the game using the following command `python motion_detection.py` and have fun!
 
 ### Demo Video
-
 [![Watch my video](https://img.youtube.com/vi/2emOTJnwu4c/0.jpg)](https://youtu.be/2emOTJnwu4c)
-
-   
-
-
 
 ### Hardware Schematic
 ![Screenshot 2025-04-02 at 11 22 52 PM](https://github.com/user-attachments/assets/80bccf1c-a986-430a-accd-d78733c23369)
