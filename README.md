@@ -15,7 +15,11 @@ This project contains the code for the red light green light game from Squid Gam
 
 ### Demo Video
 
-https://github.com/user-attachments/assets/52a9bc77-babf-485c-b165-da5e9e331dd2
+[![Watch my video](https://img.youtube.com/vi/2emOTJnwu4c/0.jpg)](https://youtu.be/2emOTJnwu4c)
+
+   
+
+
 
 ### Hardware Schematic
 ![Screenshot 2025-04-02 at 11 22 52 PM](https://github.com/user-attachments/assets/80bccf1c-a986-430a-accd-d78733c23369)
