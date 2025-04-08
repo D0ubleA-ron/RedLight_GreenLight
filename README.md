@@ -33,3 +33,7 @@ System overview:
 ### Hardware Schematic
 ![Screenshot 2025-04-02 at 11 22 52 PM](https://github.com/user-attachments/assets/80bccf1c-a986-430a-accd-d78733c23369)
 
+### UML Diagram
+![UML Diagram](https://github.com/user-attachments/assets/f6052a6a-2f70-4928-a99e-6a956c922210)
+
+
