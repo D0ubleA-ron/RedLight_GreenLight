@@ -7,11 +7,11 @@
 - [Credits](#credits)
 - [Design Process](#design-process)
 - [Hardware Decisions](#hardware-decisions)
-- [Conclusions](#conclusions)
-- [How to Run This Locally](#how-to-run-this-locally)
 - [Demo Video](#demo-video)
 - [Hardware Schematic](#hardware-schematic)
 - [UML Diagram](#uml-diagram)
+- [How to Run This Locally](#how-to-run-this-locally)
+- [Conclusions](#conclusions)
 
 ## Introduction
 This project contains the code for the Red Light, Green Light game inspired by *Squid Games*. It leverages the YOLOv8n model and is designed to run on a Raspberry Pi or a local device. The project not only serves as an interactive game but also demonstrates real-time video processing and human motion detection.
@@ -86,6 +86,16 @@ We decided that the best approach for this project would be agile due to it's de
 ### UML Diagram
 ![UML Diagram](https://github.com/user-attachments/assets/f6052a6a-2f70-4928-a99e-6a956c922210)
 
+## How to Run This Locally
+
+1. Clone this github repo.
+2. Open terminal and run the following command `pip install numpy==1.26.0 opencv-python==4.11.0.86 ultralytics==8.3.88 pygame --system-break-packages`
+3. Once the packages are done installing, open the terminal and navigate to the REDLIGHT_GREENLIGHT folder. Then enter the following commands one by one.
+   a. `cd local_dev`
+   b. `cd backend`
+   c. `cd motion_detection`
+4. Now you are in the right folder. Start the game using the following command `python motion_detection.py` and have fun!
+
 ## Conclusions
 Due to the low processing power of the Raspberry Pi, our ability to integrate many features was limited, like running the motion detection smoothly with multiple people. However, through continuous software optimization and knowledge gained throughout the course and labs, we were able to mitigate these hardware limitations and have our vision model detect an individual’s movement more accurately and faster. With further innovation, our project has the potential to be applied in automated surveillance of homes and AI-driven training simulations for athletes.
 
@@ -101,14 +111,6 @@ Aryan - The Young-Hee Robot presents an enticing challenge as it is both ambitio
 
 Aaron - I found the research portion of this project very interesting. At first, I did not believe we could run a motion detection system through OpenCV given the amount of RAM, however I did notice that there were lightweight models that could be run on a Raspberry Pi. Also, integrating the software and hardware portions of this project took some thought since it is something I have never really done.  I think that the project idea is pretty interesting and fun since it takes a fictional idea and makes it into reality. I am interested to see how this progresses!
 
-## How to Run This Locally
 
-1. Clone this github repo.
-2. Open terminal and run the following command `pip install numpy==1.26.0 opencv-python==4.11.0.86 ultralytics==8.3.88 pygame --system-break-packages`
-3. Once the packages are done installing, open the terminal and navigate to the REDLIGHT_GREENLIGHT folder. Then enter the following commands one by one.
-   a. `cd local_dev`
-   b. `cd backend`
-   c. `cd motion_detection`
-4. Now you are in the right folder. Start the game using the following command `python motion_detection.py` and have fun!
 
 
