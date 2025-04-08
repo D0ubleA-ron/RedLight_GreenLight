@@ -44,6 +44,32 @@ This project contains the code for the Red Light, Green Light game inspired by *
 
 ## Project Planning
 
+Team composition:
+| Name | Major | Year
+|-------|------|-------|
+| Ved Ballary | Computer Science | 5th Year
+| Aaron Deo | Computer Science | 5th Year
+| Ian Park | Computer Engineering | 2nd Year
+| Souvik Mazumder | Computer Engineering | 2nd Year
+| Aryan Roshan | Computer Engineering | 2nd Year
+| Siam Ibne Nasir | Computer Engineering | 2nd Year
+
+Team responsibilities:
+| Name              | Role                      | Responsibilities                                                                                                                                                                            |
+|-------------------|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Ian Park          | Embedded Systems Engineer | Handles microcontroller programming, sensor integration and real-time system control. Ensures hardware-software communication is seamless.                                                 |
+| Siam Ibne Nasir   | Embedded Systems Engineer | Develops and manages complex electrical applications and circuits to ensure compatibility. Will be integrating the speaker/buzzer for game signals.                                       |
+| Souvik Mazumder   | Embedded Systems Engineer | Will be managing hardware parts and making sure all parts are compatible with each other. And integrating the Camera’s sensing algorithm in order to detect motion.                       |
+| Aryan Roshan      | Software Developer        | Developing core game systems and game states like Game Start & End sequences, Red light/Green light functionality, Win and Lose States etc.                                              |
+| Ved Ballary       | Software Developer        | Implement multiple human detection using OpenCV library and python.                                                                                                                       |
+| Aaron Deo         | Software Developer        | Research and Implement human motion detection through OpenCV and how to detect movement with each separate person.                                                                          |
+
+Planning:
+We decided that the best approach for this project would be agile due to it's develop and reiterate approach. To execute this, we split the project into 5 sprints. We would meet on that start of each sprint to decide the tasks, point them, and split them evenly. We used miro to organize our tasks, github to host our codebase, and discord for instant communication.
+
+<img width="1010" alt="Screenshot 2025-04-08 at 12 11 45 PM" src="https://github.com/user-attachments/assets/a9b8ac70-6254-4c7a-bd49-27636796e209" />
+
+
 
 ## Credits
 
