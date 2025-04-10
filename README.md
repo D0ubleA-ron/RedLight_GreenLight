@@ -7,6 +7,7 @@
 - [Credits](#credits)
 - [Design Process](#design-process)
 - [Hardware Decisions](#hardware-decisions)
+- [Software Decisions](#software-decisions)
 - [Demo Video](#demo-video)
 - [Hardware Schematic](#hardware-schematic)
 - [UML Diagram](#uml-diagram)
@@ -72,19 +73,42 @@ We decided that the best approach for this project would be agile due to it's de
 
 
 ## Credits
+- https://www.youtube.com/watch?v=EPuyPuyS-F0 (Tutorial for redlight greenlight on arduino)
+- https://anytool.in/blog/post/build-your-own-red-light-green-light-with-python/ (Helped us with logic)
+- https://courses.ece.cornell.edu/ece5990/ECE5725_Spring2022_Projects/Wednesday%20May%2018/Squid%20Game/project_website/index.html (Similar project done at Cornell, helped with ideation)
 
 ## Design Process
 
-
 ## Hardware Decisions
-### Demo Video
+
+## Software Decisions
+
+### Libraries
+- **Pygame**: Used for playing sounds at different phases of the game (e.g., game start, end, red light, and elimination events). It provides crucial audio feedback to enhance player immersion.
+- **Pynput**: Handles keyboard input, specifically monitoring for spacebar presses to detect player interaction or premature movement.
+- **GPIOZero**: Controls GPIO pins on the Raspberry Pi for LED output, signaling Red Light and Green Light states with physical lights.
+- **OpenCV (cv2)**: Captures and processes video input from the webcam. It is essential for real-time player movement tracking and frame annotation.
+- **YOLO (Ultralytics)**: A pose estimation model used to detect and track player skeletons for motion validation during Red Light phases.
+- **NumPy**: Powers vector math and data operations for calculating player center points and detecting movement thresholds.
+
+### Language and IDE
+  - **Language**: Python was selected for its rich ecosystem, rapid prototyping capability and hardware library support (e.g., GPIOZero).
+  - **IDE**: Visual Studio Code was used for development due to its Python support, integrated terminal, debugging tools and GitHub integration.
+
+### Team Collaboration Tools
+  - **Discord**: Used for daily communication, team check-ins and sharing updates asynchronously.
+  - **Miro**: Employed for sprint planning, task mapping and brainstorming ideas visually.
+  - **Planning Poker**: Utilized during sprint planning sessions to assign story points to tasks which balanced workload distribution across the team.
+
+## Demo Video
 [![Watch my video](https://img.youtube.com/vi/2emOTJnwu4c/0.jpg)](https://youtu.be/2emOTJnwu4c)
 
-### Hardware Schematic
+## Hardware Schematic
 ![Screenshot 2025-04-02 at 11 22 52 PM](https://github.com/user-attachments/assets/80bccf1c-a986-430a-accd-d78733c23369)
 
-### UML Diagram
+## UML Diagram
 ![UML Diagram](https://github.com/user-attachments/assets/f6052a6a-2f70-4928-a99e-6a956c922210)
+
 
 ## How to Run This Locally
 
@@ -95,6 +119,7 @@ We decided that the best approach for this project would be agile due to it's de
    b. `cd backend`
    c. `cd motion_detection`
 4. Now you are in the right folder. Start the game using the following command `python motion_detection.py` and have fun!
+
 
 ## Conclusions
 Due to the low processing power of the Raspberry Pi, our ability to integrate many features was limited, like running the motion detection smoothly with multiple people. However, through continuous software optimization and knowledge gained throughout the course and labs, we were able to mitigate these hardware limitations and have our vision model detect an individual’s movement more accurately and faster. With further innovation, our project has the potential to be applied in automated surveillance of homes and AI-driven training simulations for athletes.
