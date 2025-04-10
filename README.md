@@ -48,7 +48,7 @@ This project contains the code for the Red Light, Green Light game inspired by *
 Team composition:
 | Name | Major | Email
 |-------|------|-------|
-| Ved Ballary | Computer Science | 
+| Ved Ballary | Computer Science | vedb44@proton.me
 | Aaron Deo | Computer Science | aarondeo14@gmail.com
 | Ian Park | Computer Engineering | ianpark115@gmail.com
 | Souvik Mazumder | Computer Engineering | souvikmazumder2002@gmail.com
