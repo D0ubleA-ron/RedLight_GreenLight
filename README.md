@@ -7,6 +7,7 @@
 - [Credits](#credits)
 - [Design Process](#design-process)
 - [Hardware Decisions](#hardware-decisions)
+- [Software Decisions](#software-decisions)
 - [Conclusions](#conclusions)
 - [How to Run This Locally](#how-to-run-this-locally)
 - [Demo Video](#demo-video)
@@ -85,6 +86,26 @@ We decided that the best approach for this project would be agile due to it's de
 
 ### UML Diagram
 ![UML Diagram](https://github.com/user-attachments/assets/f6052a6a-2f70-4928-a99e-6a956c922210)
+
+
+## Software Decisions
+
+### Libraries
+- **Pygame**: Used for playing sounds at different phases of the game (e.g., game start, end, red light, and elimination events). It provides crucial audio feedback to enhance player immersion.
+- **Pynput**: Handles keyboard input, specifically monitoring for spacebar presses to detect player interaction or premature movement.
+- **GPIOZero**: Controls GPIO pins on the Raspberry Pi for LED output, signaling Red Light and Green Light states with physical lights.
+- **OpenCV (cv2)**: Captures and processes video input from the webcam. It is essential for real-time player movement tracking and frame annotation.
+- **YOLO (Ultralytics)**: A pose estimation model used to detect and track player skeletons for motion validation during Red Light phases.
+- **NumPy**: Powers vector math and data operations for calculating player center points and detecting movement thresholds.
+
+### Language and IDE
+  - **Language**: Python was selected for its rich ecosystem, rapid prototyping capability and hardware library support (e.g., GPIOZero).
+  - **IDE**: Visual Studio Code was used for development due to its Python support, integrated terminal, debugging tools and GitHub integration.
+
+### Team Collaboration Tools
+  - **Discord**: Used for daily communication, team check-ins and sharing updates asynchronously.
+  - **Miro**: Employed for sprint planning, task mapping and brainstorming ideas visually.
+  - **Planning Poker**: Utilized during sprint planning sessions to assign story points to tasks which balanced workload distribution across the team.
 
 ## Conclusions
 Due to the low processing power of the Raspberry Pi, our ability to integrate many features was limited, like running the motion detection smoothly with multiple people. However, through continuous software optimization and knowledge gained throughout the course and labs, we were able to mitigate these hardware limitations and have our vision model detect an individual’s movement more accurately and faster. With further innovation, our project has the potential to be applied in automated surveillance of homes and AI-driven training simulations for athletes.
