@@ -108,7 +108,7 @@ Developing the Young-hee doll replica started with making UML diagrams to define
   - **Miro**: Employed for sprint planning, task mapping and brainstorming ideas visually.
   - **Planning Poker**: Utilized during sprint planning sessions to assign story points to tasks which balanced workload distribution across the team.
 
-## Demo Video
+## Youtube/Public Video (Click the Image)
 [![Watch my video](https://img.youtube.com/vi/2emOTJnwu4c/0.jpg)](https://youtu.be/2emOTJnwu4c)
 
 ## Hardware Schematic
