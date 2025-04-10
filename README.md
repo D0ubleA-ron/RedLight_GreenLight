@@ -78,8 +78,16 @@ We decided that the best approach for this project would be agile due to it's de
 - https://courses.ece.cornell.edu/ece5990/ECE5725_Spring2022_Projects/Wednesday%20May%2018/Squid%20Game/project_website/index.html (Similar project done at Cornell, helped with ideation)
 
 ## Design Process
+Developing the Young-hee doll replica started with making UML diagrams to define the system's structure and behavior. We used the diagrams to develop and test isolated software modules, which verified that essential functions like game logic and motion detection operated correctly. After achieving software stability, we started working on hardware implementation. The Raspberry Pi 4 served as the main component for an uncomplicated circuit arrangement that included two LEDs for visual indication purposes on a breadboard. The first hardware tests used a buzzer to confirm the system's audio performance and timing accuracy. Once we verified that the system operated correctly, we swapped out the buzzer for a Bluetooth speaker to deliver synchronized game audio during gameplay.
 
 ## Hardware Decisions
+-Raspberry Pi 4 (central controller)
+-Breadboard
+-Two LEDs (red and green to provide visual cues of red light and green light)
+-Two resistors (to prevent damaging the LEDs)
+-MM and MF wires (connections within the breadboard and to the GPIO and power pins of the Raspberry Pi 4)
+-Initially a buzzer, later changed to a Bluetooth speaker integrated with in-game audio.
+-Motion camera (to detect the presence of a player)
 
 ## Software Decisions
 
