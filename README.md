@@ -1,4 +1,4 @@
-# RedLight_GreenLight
+# Young Hee Robot/Squid Game Robot
 
 ## Table of Contents
 - [Introduction](#introduction)
