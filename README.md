@@ -46,14 +46,14 @@ This project contains the code for the Red Light, Green Light game inspired by *
 ## Project Planning
 
 Team composition:
-| Name | Major | Year
+| Name | Major | Email
 |-------|------|-------|
-| Ved Ballary | Computer Science | 5th Year
-| Aaron Deo | Computer Science | 5th Year
-| Ian Park | Computer Engineering | 2nd Year
-| Souvik Mazumder | Computer Engineering | 2nd Year
-| Aryan Roshan | Computer Engineering | 2nd Year
-| Siam Ibne Nasir | Computer Engineering | 2nd Year
+| Ved Ballary | Computer Science | 
+| Aaron Deo | Computer Science | aarondeo14@gmail.com
+| Ian Park | Computer Engineering | ianpark115@gmail.com
+| Souvik Mazumder | Computer Engineering | souvikmazumder2002@gmail.com
+| Aryan Roshan | Computer Engineering | arynrosh@gmail.com
+| Siam Ibne Nasir | Computer Engineering | siamibne1512@gmail.com
 
 Team responsibilities:
 | Name              | Role                      | Responsibilities                                                                                                                                                                            |
